@@ -10,15 +10,17 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListener {
 
 
-    private JButton originalSaveBrowse, regionConvertedSaveBrowse, saveBrowse, convertSave, convertAgain;
+    private JButton originalSaveBrowse, regionConvertedSaveBrowse, saveBrowse, convertSave, replaceHeader;
     private JLabel originalSaveLabel, regionConvertedSaveLabel, saveLabel;
     private String originalSavePath, regionConvertedSavePath, savePath;
-    private JTextField ogsavefield, modsavefield, saveField;
+    private JTextField originalSaveField, regionConvertedSaveField, saveField;
     private JRadioButton usButton, palButton, japanButton;
 
 
@@ -48,20 +50,20 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         convertSave = new JButton("Convert Save");
         convertSave.addActionListener(this);
 
-        originalSaveLabel = new JLabel("Original Save Path");
-        regionConvertedSaveLabel = new JLabel("Converted Save Path");
+        originalSaveLabel = new JLabel("Converted Region Save Path (save with the region you want to convert to)");
+        regionConvertedSaveLabel = new JLabel("Original Save Path (save that you want to convert)");
 
-        ogsavefield = new JTextField(10);
-        ogsavefield.setEditable(false);
+        originalSaveField = new JTextField(10);
+        originalSaveField.setEditable(false);
 
-        modsavefield = new JTextField(10);
-        modsavefield.setEditable(false);
+        regionConvertedSaveField = new JTextField(10);
+        regionConvertedSaveField.setEditable(false);
 
         mainMenuPanel.add(originalSaveLabel);
-        mainMenuPanel.add(ogsavefield);
+        mainMenuPanel.add(originalSaveField);
         mainMenuPanel.add(originalSaveBrowse);
         mainMenuPanel.add(regionConvertedSaveLabel);
-        mainMenuPanel.add(modsavefield);
+        mainMenuPanel.add(regionConvertedSaveField);
         mainMenuPanel.add(regionConvertedSaveBrowse);
         mainMenuPanel.add(convertSave);
 
@@ -79,8 +81,8 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         saveBrowse = new JButton("Browse");
         saveBrowse.addActionListener(this);
 
-        convertAgain = new JButton("Convert Save");
-        convertAgain.addActionListener(this);
+        replaceHeader = new JButton("Convert Save");
+        replaceHeader.addActionListener(this);
 
         saveLabel = new JLabel("Save Path");
 
@@ -94,14 +96,14 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         testPanel.add(saveLabel);
         testPanel.add(saveField);
         testPanel.add(saveBrowse);
-        testPanel.add(convertAgain);
+        testPanel.add(replaceHeader);
 
         jPanels.add(mainMenuPanel);
         jPanels.add(testPanel);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.add("Two Existing Saves", jPanels.get(0));
-        tabbedPane.add("Create Converted Save from Save", jPanels.get(1));
+        tabbedPane.add("Use Header from Another Save", jPanels.get(0));
+        tabbedPane.add("Replace Region In Header", jPanels.get(1));
         add(tabbedPane);
     }
 
@@ -116,7 +118,7 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             int response = fileChooser.showOpenDialog(null);
             if (response == JFileChooser.APPROVE_OPTION) {
                 originalSavePath = fileChooser.getSelectedFile().getAbsolutePath();
-                ogsavefield.setText(originalSavePath);
+                originalSaveField.setText(originalSavePath);
             } else {
                 return;
             }
@@ -131,7 +133,7 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             int response = fileChooser.showOpenDialog(null);
             if (response == JFileChooser.APPROVE_OPTION) {
                 regionConvertedSavePath = fileChooser.getSelectedFile().getAbsolutePath();
-                modsavefield.setText(regionConvertedSavePath);
+                regionConvertedSaveField.setText(regionConvertedSavePath);
             } else {
                 return;
             }
@@ -167,11 +169,20 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
                 return;
             }
 
+            if (isJapaneseSave(originalSave)) {
+                int japaneseSaveDialogResult = JOptionPane.showConfirmDialog(this, "<html>You are about to convert to a Japanese save which can corrupt English memory cards<br>Back up your memory card and saves before proceeding<br>Are you sure you want to proceed?</html>");
+                if (japaneseSaveDialogResult != JOptionPane.YES_OPTION){
+                    return;
+                }
+            }
+
             SaveConverter saveConverter = new SaveConverter();
             saveConverter.convertSave(originalSave, regionConvertedSave);
+
+            JOptionPane.showMessageDialog(this, "Done!");
         }
 
-        if (e.getSource() == convertAgain) {
+        if (e.getSource() == replaceHeader) {
 
             File saveFile = new File(savePath);
 
@@ -188,10 +199,34 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
             if (japanButton.isSelected()) {
                 saveConvertedRegion = GameCubeConstants.JAPAN_REGION;
+                int japaneseSaveDialogResult = JOptionPane.showConfirmDialog(this, "<html>You are about to convert to a Japanese save which can corrupt English memory cards<br>Back up your memory card and saves before proceeding<br>Are you sure you want to proceed?</html>");
+                if (japaneseSaveDialogResult != JOptionPane.YES_OPTION){
+                    return;
+                }
             }
 
             SaveConverter saveConverter = new SaveConverter();
             saveConverter.convertSave(saveFile, saveConvertedRegion);
+
+            JOptionPane.showMessageDialog(this, "Done!");
         }
+    }
+
+    private boolean isJapaneseSave(File save) {
+        return getSaveRegion(save) == 'J';
+    }
+    private char getSaveRegion(File save) {
+
+        char saveRegion = 0;
+        //directly write to the region at the beginning of GCI saves (the fourth byte in the save is the region)
+        try (RandomAccessFile raf = new RandomAccessFile(save, "r")) {
+            raf.seek(3);
+            saveRegion = (char) raf.read();
+
+        } catch (IOException e) {
+            return 0;
+        }
+
+        return saveRegion;
     }
 }
