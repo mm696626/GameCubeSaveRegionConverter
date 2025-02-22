@@ -1,11 +1,14 @@
 package ui;
 
+import io.SaveConverter;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 
 public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListener {
@@ -134,7 +137,21 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         }
 
         if (e.getSource() == convertSave) {
-            System.out.println("Hello");
+            File originalSave = new File(originalSavePath);
+            File regionConvertedSave = new File(regionConvertedSavePath);
+
+            if (!originalSave.exists() || !regionConvertedSave.exists()) {
+                JOptionPane.showMessageDialog(this, "The provided save file path doesn't have an existing save");
+                return;
+            }
+
+            if (originalSave.equals(regionConvertedSave)) {
+                JOptionPane.showMessageDialog(this, "This is the same path! Please provide different paths");
+                return;
+            }
+
+            SaveConverter saveConverter = new SaveConverter();
+            saveConverter.convertSave(originalSave, regionConvertedSave);
         }
     }
 }
