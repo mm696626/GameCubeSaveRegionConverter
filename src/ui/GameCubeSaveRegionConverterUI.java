@@ -1,5 +1,6 @@
 package ui;
 
+import constants.GameCubeConstants;
 import io.SaveConverter;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
     private JLabel originalSaveLabel, regionConvertedSaveLabel, saveLabel;
     private String originalSavePath, regionConvertedSavePath, savePath;
     private JTextField ogsavefield, modsavefield, saveField;
+    private JRadioButton usButton, palButton, japanButton;
 
 
     private ArrayList<JPanel> jPanels = new ArrayList<>();
@@ -33,7 +35,7 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         mainMenuPanel.setLayout(mainMenuGridLayout);
 
         JPanel testPanel = new JPanel();
-        GridLayout testLayout = new GridLayout(2, 3);
+        GridLayout testLayout = new GridLayout(3, 3);
         testPanel.setLayout(testLayout);
 
         //main menu panel
@@ -63,6 +65,17 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         mainMenuPanel.add(regionConvertedSaveBrowse);
         mainMenuPanel.add(convertSave);
 
+        //other panel lol
+
+        usButton = new JRadioButton("USA");
+        palButton = new JRadioButton("PAL");
+        japanButton = new JRadioButton("Japan");
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(usButton);
+        group.add(palButton);
+        group.add(japanButton);
+
         saveBrowse = new JButton("Browse");
         saveBrowse.addActionListener(this);
 
@@ -73,6 +86,10 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
 
         saveField = new JTextField(10);
         saveField.setEditable(false);
+
+        testPanel.add(usButton);
+        testPanel.add(palButton);
+        testPanel.add(japanButton);
 
         testPanel.add(saveLabel);
         testPanel.add(saveField);
@@ -152,6 +169,29 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
 
             SaveConverter saveConverter = new SaveConverter();
             saveConverter.convertSave(originalSave, regionConvertedSave);
+        }
+
+        if (e.getSource() == convertAgain) {
+
+            File saveFile = new File(savePath);
+
+            String saveConvertedRegion = "";
+            if (!usButton.isSelected() && !palButton.isSelected() && !japanButton.isSelected()) {
+                JOptionPane.showMessageDialog(this, "No region was selected!");
+                return;
+            }
+            if (usButton.isSelected()) {
+                saveConvertedRegion = GameCubeConstants.US_REGION;
+            }
+            if (palButton.isSelected()) {
+                saveConvertedRegion = GameCubeConstants.PAL_REGION;
+            }
+            if (japanButton.isSelected()) {
+                saveConvertedRegion = GameCubeConstants.JAPAN_REGION;
+            }
+
+            SaveConverter saveConverter = new SaveConverter();
+            saveConverter.convertSave(saveFile, saveConvertedRegion);
         }
     }
 }
