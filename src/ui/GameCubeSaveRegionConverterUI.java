@@ -31,15 +31,15 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
     }
 
     private void generateUI() {
-        JPanel mainMenuPanel = new JPanel();
+        JPanel otherSaveHeaderPanel = new JPanel();
         GridLayout mainMenuGridLayout = new GridLayout(3, 3);
-        mainMenuPanel.setLayout(mainMenuGridLayout);
+        otherSaveHeaderPanel.setLayout(mainMenuGridLayout);
 
-        JPanel testPanel = new JPanel();
+        JPanel replaceHeaderPanel = new JPanel();
         GridLayout testLayout = new GridLayout(3, 3);
-        testPanel.setLayout(testLayout);
+        replaceHeaderPanel.setLayout(testLayout);
 
-        //main menu panel
+        //other save header panel
 
         originalSaveBrowse = new JButton("Browse");
         originalSaveBrowse.addActionListener(this);
@@ -58,15 +58,15 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         regionConvertedSaveField = new JTextField(10);
         regionConvertedSaveField.setEditable(false);
 
-        mainMenuPanel.add(originalSaveLabel);
-        mainMenuPanel.add(originalSaveField);
-        mainMenuPanel.add(originalSaveBrowse);
-        mainMenuPanel.add(regionConvertedSaveLabel);
-        mainMenuPanel.add(regionConvertedSaveField);
-        mainMenuPanel.add(regionConvertedSaveBrowse);
-        mainMenuPanel.add(convertSave);
+        otherSaveHeaderPanel.add(originalSaveLabel);
+        otherSaveHeaderPanel.add(originalSaveField);
+        otherSaveHeaderPanel.add(originalSaveBrowse);
+        otherSaveHeaderPanel.add(regionConvertedSaveLabel);
+        otherSaveHeaderPanel.add(regionConvertedSaveField);
+        otherSaveHeaderPanel.add(regionConvertedSaveBrowse);
+        otherSaveHeaderPanel.add(convertSave);
 
-        //other panel lol
+        //replace header panel
 
         usButton = new JRadioButton("USA");
         palButton = new JRadioButton("PAL");
@@ -88,17 +88,17 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         saveField = new JTextField(10);
         saveField.setEditable(false);
 
-        testPanel.add(usButton);
-        testPanel.add(palButton);
-        testPanel.add(japanButton);
+        replaceHeaderPanel.add(usButton);
+        replaceHeaderPanel.add(palButton);
+        replaceHeaderPanel.add(japanButton);
 
-        testPanel.add(saveLabel);
-        testPanel.add(saveField);
-        testPanel.add(saveBrowse);
-        testPanel.add(replaceHeader);
+        replaceHeaderPanel.add(saveLabel);
+        replaceHeaderPanel.add(saveField);
+        replaceHeaderPanel.add(saveBrowse);
+        replaceHeaderPanel.add(replaceHeader);
 
-        jPanels.add(mainMenuPanel);
-        jPanels.add(testPanel);
+        jPanels.add(otherSaveHeaderPanel);
+        jPanels.add(replaceHeaderPanel);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.add("Use Header from Another Save", jPanels.get(0));
