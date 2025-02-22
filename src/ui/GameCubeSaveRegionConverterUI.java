@@ -9,9 +9,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 
 public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListener {
@@ -29,6 +27,7 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
     public GameCubeSaveRegionConverterUI() {
         setTitle("GameCube Save Region Converter");
         generateUI();
+        showWarningMessage();
     }
 
     private void generateUI() {
@@ -169,12 +168,6 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
                 return;
             }
 
-            if (isJapaneseSave(originalSave)) {
-                int japaneseSaveDialogResult = JOptionPane.showConfirmDialog(this, "<html>You are about to convert to a Japanese save which can corrupt English memory cards<br>Back up your memory card and saves before proceeding<br>Are you sure you want to proceed?</html>");
-                if (japaneseSaveDialogResult != JOptionPane.YES_OPTION){
-                    return;
-                }
-            }
 
             SaveConverter saveConverter = new SaveConverter();
             saveConverter.convertSave(originalSave, regionConvertedSave);
@@ -204,10 +197,6 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
             if (japanButton.isSelected()) {
                 saveConvertedRegion = GameCubeConstants.JAPAN_REGION;
-                int japaneseSaveDialogResult = JOptionPane.showConfirmDialog(this, "<html>You are about to convert to a Japanese save which can corrupt English memory cards<br>Back up your memory card and saves before proceeding<br>Are you sure you want to proceed?</html>");
-                if (japaneseSaveDialogResult != JOptionPane.YES_OPTION){
-                    return;
-                }
             }
 
             SaveConverter saveConverter = new SaveConverter();
@@ -220,21 +209,25 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         }
     }
 
-    private boolean isJapaneseSave(File save) {
-        return getSaveRegion(save) == 'J';
+    private void showWarningMessage() {
+        File warningSeen = new File("warningSeen.txt");
+        if (!warningSeen.exists()) {
+            JOptionPane.showMessageDialog(this, GameCubeConstants.JAPAN_SAVE_WARNING);
+            createWarningSeenFile();
+        }
     }
-    private char getSaveRegion(File save) {
 
-        char saveRegion = 0;
-        //directly write to the region at the beginning of GCI saves (the fourth byte in the save is the region)
-        try (RandomAccessFile raf = new RandomAccessFile(save, "r")) {
-            raf.seek(3);
-            saveRegion = (char) raf.read();
+    private void createWarningSeenFile() {
+        PrintWriter outputStream = null;
 
-        } catch (IOException e) {
-            return 0;
+        try {
+            outputStream = new PrintWriter( new FileOutputStream("warningSeen.txt"));
+        }
+        catch (FileNotFoundException f) {
+            System.out.println("File does not exist");
+            System.exit(0);
         }
 
-        return saveRegion;
+        outputStream.close();
     }
 }
