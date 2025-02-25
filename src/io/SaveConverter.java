@@ -8,12 +8,12 @@ import java.io.RandomAccessFile;
 
 public class SaveConverter {
 
-    public void convertSave(File save, File save2) {
+    public void convertSave(File regionConvertedSave, File originalSave) {
 
         //replace save header with a header from an actual save of that region (first 64 bytes is header)
         byte[] byteArray = new byte[64];
 
-        try (RandomAccessFile raf = new RandomAccessFile(save, "r")) {
+        try (RandomAccessFile raf = new RandomAccessFile(regionConvertedSave, "r")) {
             raf.seek(0);
             int bytesRead = raf.read(byteArray);
 
@@ -24,7 +24,7 @@ public class SaveConverter {
             return;
         }
 
-        try (RandomAccessFile raf = new RandomAccessFile(save2, "rw")) {
+        try (RandomAccessFile raf = new RandomAccessFile(originalSave, "rw")) {
 
             raf.seek(0);
             raf.write(byteArray);

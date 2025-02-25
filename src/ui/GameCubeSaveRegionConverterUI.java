@@ -10,15 +10,17 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListener {
 
 
-    private JButton originalSaveBrowse, regionConvertedSaveBrowse, saveBrowse, convertSave, replaceHeader;
-    private JLabel originalSaveLabel, regionConvertedSaveLabel, saveLabel;
-    private String originalSavePath, regionConvertedSavePath, savePath;
-    private JTextField originalSaveField, regionConvertedSaveField, saveField;
+    private JButton regionConvertedSaveBrowse, originalSaveBrowse, saveBrowse, convertSave, replaceHeader;
+    private JLabel regionConvertedSaveLabel, originalSaveLabel, saveLabel;
+    private String regionConvertedSavePath, originalSavePath, savePath;
+    private JTextField regionConvertedSaveField, originalSaveField, saveField;
     private JRadioButton usButton, palButton, japanButton;
 
 
@@ -41,22 +43,22 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
 
         //other save header panel
 
-        originalSaveBrowse = new JButton("Browse");
-        originalSaveBrowse.addActionListener(this);
         regionConvertedSaveBrowse = new JButton("Browse");
         regionConvertedSaveBrowse.addActionListener(this);
+        originalSaveBrowse = new JButton("Browse");
+        originalSaveBrowse.addActionListener(this);
 
         convertSave = new JButton("Convert Save");
         convertSave.addActionListener(this);
 
-        originalSaveLabel = new JLabel("Converted Region Save Path (save with the region you want to convert to)");
-        regionConvertedSaveLabel = new JLabel("Original Save Path (save that you want to convert)");
-
-        originalSaveField = new JTextField(10);
-        originalSaveField.setEditable(false);
+        regionConvertedSaveLabel = new JLabel("Converted Region Save Path (save with the region you want to convert to)");
+        originalSaveLabel = new JLabel("Original Save Path (save that you want to convert)");
 
         regionConvertedSaveField = new JTextField(10);
         regionConvertedSaveField.setEditable(false);
+
+        originalSaveField = new JTextField(10);
+        originalSaveField.setEditable(false);
 
         otherSaveHeaderPanel.add(originalSaveLabel);
         otherSaveHeaderPanel.add(originalSaveField);
@@ -109,21 +111,6 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        if (e.getSource() == originalSaveBrowse) {
-            JFileChooser fileChooser = new JFileChooser();
-            FileFilter filter = new FileNameExtensionFilter("GCI File","gci");
-            fileChooser.setFileFilter(filter);
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            int response = fileChooser.showOpenDialog(null);
-            if (response == JFileChooser.APPROVE_OPTION) {
-                originalSavePath = fileChooser.getSelectedFile().getAbsolutePath();
-                originalSaveField.setText(originalSavePath);
-            } else {
-                return;
-            }
-
-        }
-
         if (e.getSource() == regionConvertedSaveBrowse) {
             JFileChooser fileChooser = new JFileChooser();
             FileFilter filter = new FileNameExtensionFilter("GCI File","gci");
@@ -133,6 +120,21 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             if (response == JFileChooser.APPROVE_OPTION) {
                 regionConvertedSavePath = fileChooser.getSelectedFile().getAbsolutePath();
                 regionConvertedSaveField.setText(regionConvertedSavePath);
+            } else {
+                return;
+            }
+
+        }
+
+        if (e.getSource() == originalSaveBrowse) {
+            JFileChooser fileChooser = new JFileChooser();
+            FileFilter filter = new FileNameExtensionFilter("GCI File","gci");
+            fileChooser.setFileFilter(filter);
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int response = fileChooser.showOpenDialog(null);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                originalSavePath = fileChooser.getSelectedFile().getAbsolutePath();
+                originalSaveField.setText(originalSavePath);
             } else {
                 return;
             }
@@ -155,8 +157,8 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         }
 
         if (e.getSource() == convertSave) {
-            File originalSave = new File(originalSavePath);
             File regionConvertedSave = new File(regionConvertedSavePath);
+            File originalSave = new File(originalSavePath);
 
             if (!originalSave.exists() || !regionConvertedSave.exists()) {
                 JOptionPane.showMessageDialog(this, "The provided save file path doesn't have an existing save");
@@ -168,14 +170,19 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
                 return;
             }
 
+            try {
+                backupSave(originalSave);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
 
             SaveConverter saveConverter = new SaveConverter();
-            saveConverter.convertSave(originalSave, regionConvertedSave);
+            saveConverter.convertSave(regionConvertedSave, originalSave);
 
-            originalSaveField.setText("");
             regionConvertedSaveField.setText("");
-            originalSavePath = "";
+            originalSaveField.setText("");
             regionConvertedSavePath = "";
+            originalSavePath = "";
 
             JOptionPane.showMessageDialog(this, "Done!");
         }
@@ -197,6 +204,12 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
             if (japanButton.isSelected()) {
                 saveConvertedRegion = GameCubeConstants.JAPAN_REGION;
+            }
+
+            try {
+                backupSave(saveFile);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
 
             SaveConverter saveConverter = new SaveConverter();
@@ -229,5 +242,16 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         }
 
         outputStream.close();
+    }
+
+    private void backupSave(File save) throws IOException {
+        File backupFolder = new File("backups");
+
+        if (!backupFolder.exists()) {
+            backupFolder.mkdirs();
+        }
+
+        File backupFile = new File(backupFolder, save.getName());
+        Files.copy(save.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     }
 }
