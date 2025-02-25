@@ -16,3 +16,7 @@
 
 ### Note for Japanese Saves
 * If you're using a Japanese Memory Card, this tool won't convert the save encoding, so some games will wipe the memory card
+
+### Resources Used
+* F-Zero GX Docs for documenting the GCI file header
+* Link: https://github.com/JoselleAstrid/fzerogx-docs/blob/master/file_formats/gci.md
