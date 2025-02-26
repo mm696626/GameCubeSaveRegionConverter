@@ -2,13 +2,18 @@ package io;
 
 import constants.GameCubeConstants;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class SaveConverter {
+public class SaveConverter extends JFrame {
 
-    public void convertSave(File regionConvertedSave, File originalSave) {
+    public void convertSave(File regionConvertedSave, File originalSave) throws IOException {
 
         //replace save header with a header from an actual save of that region (first 64 bytes is header)
         byte[] byteArray = new byte[64];
@@ -32,9 +37,21 @@ public class SaveConverter {
         } catch (IOException e) {
             return;
         }
+
+        String convertedSaveName = getConvertedSaveName(originalSave);
+        File convertedSave = new File(originalSave.getParent(), convertedSaveName);
+
+        Files.move(originalSave.toPath(), convertedSave.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public void convertSave(File save, String region) {
+    private String getConvertedSaveName(File originalSave) {
+        String originalSaveFileName = originalSave.getName();
+        String originalSaveFileBaseName = originalSaveFileName.substring(0, originalSaveFileName.lastIndexOf('.'));
+        String originalSaveFileExtension = originalSaveFileName.substring(originalSaveFileName.lastIndexOf('.'));
+        return originalSaveFileBaseName + "_converted" + originalSaveFileExtension;
+    }
+
+    public void convertSave(File save, String region) throws IOException {
 
         char regionChar = 0;
 
@@ -50,6 +67,21 @@ public class SaveConverter {
             regionChar = 'J';
         }
 
+        String gameID = getGameID(save);
+        if (gameID == null) return;
+
+        // All possible Game ID with saves follow this format
+        String regex = "^[GDP][A-Z0-9]{2}[JEP][A-Z0-9]{2}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(gameID);
+
+        if (!matcher.matches()) {
+            int result = JOptionPane.showConfirmDialog(this, "An invalid Game ID was detected in your save file header. Would you like to continue anyway?");
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
         //directly write to the region at the beginning of GCI saves (the fourth byte in the save is the region)
         try (RandomAccessFile raf = new RandomAccessFile(save, "rw")) {
             raf.seek(3);
@@ -58,5 +90,31 @@ public class SaveConverter {
         } catch (IOException e) {
             return;
         }
+
+        String convertedSaveName = getConvertedSaveName(save);
+        File convertedSave = new File(save.getParent(), convertedSaveName);
+
+        Files.move(save.toPath(), convertedSave.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private static String getGameID(File save) {
+        byte[] byteArray = new byte[6];
+
+        try (RandomAccessFile raf = new RandomAccessFile(save, "r")) {
+            raf.seek(0);
+            int bytesRead = raf.read(byteArray);
+
+            if (bytesRead == -1) {
+                return null;
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+        String gameID = "";
+        for (int i=0; i<byteArray.length; i++) {
+            gameID += (char)byteArray[i];
+        }
+        return gameID;
     }
 }

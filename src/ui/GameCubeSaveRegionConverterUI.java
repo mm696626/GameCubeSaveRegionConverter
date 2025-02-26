@@ -177,7 +177,11 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
 
             SaveConverter saveConverter = new SaveConverter();
-            saveConverter.convertSave(regionConvertedSave, originalSave);
+            try {
+                saveConverter.convertSave(regionConvertedSave, originalSave);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
 
             regionConvertedSaveField.setText("");
             originalSaveField.setText("");
@@ -213,7 +217,11 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
 
             SaveConverter saveConverter = new SaveConverter();
-            saveConverter.convertSave(saveFile, saveConvertedRegion);
+            try {
+                saveConverter.convertSave(saveFile, saveConvertedRegion);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
 
             saveField.setText("");
             savePath = "";
