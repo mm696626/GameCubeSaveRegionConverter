@@ -13,6 +13,11 @@ public class SaveConverter extends JFrame {
 
     public boolean convertSave(File regionConvertedSave, File originalSave) throws IOException {
 
+        if (isInvalidSaveFileSize(regionConvertedSave) || isInvalidSaveFileSize(originalSave)) {
+            JOptionPane.showMessageDialog(this, "One of the provided save files isn't large enough in size to be used");
+            return false;
+        }
+
         //replace save header with a header from an actual save of that region (first 64 bytes is header)
         byte[] byteArray = new byte[64];
 
@@ -51,6 +56,11 @@ public class SaveConverter extends JFrame {
     }
 
     public boolean convertSave(File save, String region) throws IOException {
+
+        if (isInvalidSaveFileSize(save)) {
+            JOptionPane.showMessageDialog(this, "The provided save file isn't large enough in size to be used");
+            return false;
+        }
 
         char regionChar = 0;
 
@@ -114,5 +124,9 @@ public class SaveConverter extends JFrame {
             gameID += (char)byteArray[i];
         }
         return gameID;
+    }
+
+    private boolean isInvalidSaveFileSize(File save) {
+        return save.length() < 64;
     }
 }
