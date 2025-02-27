@@ -51,8 +51,8 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
         convertSave = new JButton("Convert Save");
         convertSave.addActionListener(this);
 
-        regionConvertedSaveLabel = new JLabel("Converted Region Save Path (save with the region you want to convert to)");
-        originalSaveLabel = new JLabel("Original Save Path (save that you want to convert)");
+        regionConvertedSaveLabel = new JLabel("Save with the region you want to convert to");
+        originalSaveLabel = new JLabel("Save that you want to convert");
 
         regionConvertedSaveField = new JTextField(10);
         regionConvertedSaveField.setEditable(false);
@@ -177,8 +177,9 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
 
             SaveConverter saveConverter = new SaveConverter();
+            boolean isSuccessfulConvert = false;
             try {
-                saveConverter.convertSave(regionConvertedSave, originalSave);
+                isSuccessfulConvert = saveConverter.convertSave(regionConvertedSave, originalSave);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -188,7 +189,9 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             regionConvertedSavePath = "";
             originalSavePath = "";
 
-            JOptionPane.showMessageDialog(this, "Done!");
+            if (isSuccessfulConvert) {
+                JOptionPane.showMessageDialog(this, "Done!");
+            }
         }
 
         if (e.getSource() == replaceHeader) {
@@ -217,8 +220,9 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             }
 
             SaveConverter saveConverter = new SaveConverter();
+            boolean isSuccessfulConvert = false;
             try {
-                saveConverter.convertSave(saveFile, saveConvertedRegion);
+                isSuccessfulConvert = saveConverter.convertSave(saveFile, saveConvertedRegion);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -226,7 +230,9 @@ public class GameCubeSaveRegionConverterUI extends JFrame implements ActionListe
             saveField.setText("");
             savePath = "";
 
-            JOptionPane.showMessageDialog(this, "Done!");
+            if (isSuccessfulConvert) {
+                JOptionPane.showMessageDialog(this, "Done!");
+            }
         }
     }
 

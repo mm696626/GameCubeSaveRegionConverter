@@ -8,12 +8,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SaveConverter extends JFrame {
 
-    public void convertSave(File regionConvertedSave, File originalSave) throws IOException {
+    public boolean convertSave(File regionConvertedSave, File originalSave) throws IOException {
 
         //replace save header with a header from an actual save of that region (first 64 bytes is header)
         byte[] byteArray = new byte[64];
@@ -23,10 +21,10 @@ public class SaveConverter extends JFrame {
             int bytesRead = raf.read(byteArray);
 
             if (bytesRead == -1) {
-                return;
+                return false;
             }
         } catch (IOException e) {
-            return;
+            return false;
         }
 
         try (RandomAccessFile raf = new RandomAccessFile(originalSave, "rw")) {
@@ -35,13 +33,14 @@ public class SaveConverter extends JFrame {
             raf.write(byteArray);
 
         } catch (IOException e) {
-            return;
+            return false;
         }
 
         String convertedSaveName = getConvertedSaveName(originalSave);
         File convertedSave = new File(originalSave.getParent(), convertedSaveName);
 
         Files.move(originalSave.toPath(), convertedSave.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return true;
     }
 
     private String getConvertedSaveName(File originalSave) {
@@ -51,7 +50,7 @@ public class SaveConverter extends JFrame {
         return originalSaveFileBaseName + "_converted" + originalSaveFileExtension;
     }
 
-    public void convertSave(File save, String region) throws IOException {
+    public boolean convertSave(File save, String region) throws IOException {
 
         char regionChar = 0;
 
@@ -68,17 +67,15 @@ public class SaveConverter extends JFrame {
         }
 
         String gameID = getGameID(save);
-        if (gameID == null) return;
+        if (gameID == null) return false;
 
         // All possible Game ID with saves follow this format
         String regex = "^[GDP][A-Z0-9]{2}[JEP][A-Z0-9]{2}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(gameID);
 
-        if (!matcher.matches()) {
-            int result = JOptionPane.showConfirmDialog(this, "An invalid Game ID was detected in your save file header. Would you like to continue anyway?");
-            if (result != JOptionPane.YES_OPTION) {
-                return;
+        if (!gameID.matches(regex)) {
+            int invalidGameIDDialogResult = JOptionPane.showConfirmDialog(this, "<html>An invalid Game ID was detected in the provided save file's header.<br>Would you like to continue anyway?</html>");
+            if (invalidGameIDDialogResult != JOptionPane.YES_OPTION) {
+                return false;
             }
         }
 
@@ -88,16 +85,17 @@ public class SaveConverter extends JFrame {
             raf.write(regionChar);
 
         } catch (IOException e) {
-            return;
+            return false;
         }
 
         String convertedSaveName = getConvertedSaveName(save);
         File convertedSave = new File(save.getParent(), convertedSaveName);
 
         Files.move(save.toPath(), convertedSave.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return true;
     }
 
-    private static String getGameID(File save) {
+    private String getGameID(File save) {
         byte[] byteArray = new byte[6];
 
         try (RandomAccessFile raf = new RandomAccessFile(save, "r")) {
